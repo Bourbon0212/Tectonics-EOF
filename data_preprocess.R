@@ -2,7 +2,7 @@ library(readr)
 library(tidyverse)
 setwd("E:/GitHub/Tectonics-EOF")
 
-### 2016 緻綺Julian Date 丁Α (ぱ计 - 0.5)/366
+### 20160206 緻綺Julian Date 丁Α (ぱ计 - 0.5)/366
 
 file_path <- list.files("data_raw")
 
@@ -47,5 +47,13 @@ df_select <- df_filter[colSums(!is.na(df_filter)) >= 25] # Drop stations with to
 Cz <- zoo(df_select) # Interpolate with zoo
 df_filled <- as.data.frame(na.fill(na.approx(Cz), "extend"))
 
-save.image("0820_work.RData")
-# load("0815_work.RData")
+###  PCA
+data.pca <- prcomp(df_filled[2:237])
+pca_eigenvector <- as.data.frame(data.pca$rotation[,1:2]) # Si (丁家Α)
+pca_eigenvalue <- as.data.frame(data.pca$x[,1:2])
+
+Si = data.pca$rotation; D = data.matrix(df_filled[,2:237])
+Ti = D %*% Si # Si (丁家Α)
+
+# save.image("0820_work.RData")
+load("0820_work.RData")
