@@ -57,3 +57,30 @@ Ti = D %*% Si # Si (時間模式)
 
 # save.image("0820_work.RData")
 load("0820_work.RData")
+
+### Generate stations list with loacation
+
+sta_name <- c()
+sta_lat <- c()
+sta_lon <- c()
+
+for (i in 1:length(file_path)) {
+  tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))
+  print(file_path[i])
+  sta_name[i] <- substring(file_path[i],1,4)
+  sta_lat[i] <- round(tmp$lat[1], 5)
+  sta_lon[i] <- round(tmp$lon[1], 5)
+}
+
+df_sta <- data.frame(name = sta_name, lat = sta_lat, lon = sta_lon)
+
+### Si 空間模式與測站座標合併
+
+pca_eigenvector <- cbind(newColName = substring(rownames(pca_eigenvector),1,4), pca_eigenvector)
+rownames(pca_eigenvector) <- 1:nrow(pca_eigenvector)
+colnames(pca_eigenvector) <- c("name", "PC1", "PC2")
+
+df_si_2 <- inner_join(pca_eigenvector, df_sta, by="name")
+
+save.image("0824_work.RData")
+# load("0820_work.RData")
