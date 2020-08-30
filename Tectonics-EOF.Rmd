@@ -1,0 +1,96 @@
+---
+title: "Tectonics-EOF"
+author: "Bourbon0212"
+date: "2020/8/30"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 2
+    toc_float:
+      collapsed: false
+      smooth_scroll: true
+---
+
+```{r setup, include=FALSE}
+setwd("E:/GitHub/Tectonics-EOF")
+### 20160206 美濃地震，Julian Date 時間格式 (天數 - 0.5)/366
+### 120.54, 22.92
+```
+
+## Data Preprocess & EOF
+
+### Station List with Locations
+
+```{r gen_stations1, eval=FALSE, message=F, results='hide'}
+file_path <- list.files("data_raw") # COR files of all stations
+sta_name <- c();sta_lat <- c();sta_lon <- c()
+
+for (i in 1:length(file_path)) {
+  tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))
+  print(file_path[i])
+  sta_name[i] <- substring(file_path[i],1,4)
+  sta_lat[i] <- round(tmp$lat[1], 5)
+  sta_lon[i] <- round(tmp$lon[1], 5)
+}
+
+df_sta <- data.frame(name = sta_name, lat = sta_lat, lon = sta_lon)
+```
+```{r gen_stations2}
+df_sta <- readRDS("df_sta.rds")
+```
+
+### Tidying, Interpolations & EOF
+
+```{r data_preprocess, message=FALSE, warning=FALSE}
+library(readr);library(tidyverse);library(zoo)
+if(!exists("data_process", mode="function")) source("data_preprocess.R")
+
+start <- "2016-01-22"
+end <- "2016-02-21"
+cc <- data_process(start, end, 24, "E")
+```
+
+### Results of Si & Ti
+```{r bind_modes1, warning=FALSE}
+Si <- cc$Si[,1:2]
+Si <- cbind(newColName = substring(rownames(Si),1,4), Si)
+rownames(Si) <- 1:nrow(Si)
+colnames(Si) <- c("name", "PC1", "PC2")
+df_si <- inner_join(Si, df_sta, by="name")
+df_ti <- cc$Ti[,1:2]
+df_ti$date <- date <- seq(as.Date(start), as.Date(end), by="days")
+```
+```{r bind_modes2, echo=FALSE, warning=FALSE}
+df_si %>%
+  head(5) %>%
+  knitr::kable(align = 'c') %>%
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = T)
+df_ti %>%
+  head(5) %>%
+  knitr::kable(align = 'c') %>%
+  kableExtra::kable_styling(bootstrap_options = "striped", full_width = T)
+```
+
+## Data Visualization
+
+### Visualization of Si
+
+* `tmap` usage: [Spatial Interpolation](https://mgimond.github.io/Spatial/interpolation-in-r.html)
+* Taiwan ShapeFile
+* Normalization of PC: Divided by its maximum
+
+```{r si_visualize_setup, warning=FALSE, message=FALSE}
+library(rgdal);library(GISTools);library(splancs)
+library(gstat) # Use gstat's idw routine
+library(sp) # Used for the spsample function
+library(raster) # Used for clip out
+library(tmap) # Install "XML" first, install.packages("XML", type="binary")
+if(!exists("visualize_si", mode="function")) source("data_visualization.R")
+```
+
+### Visualization of Ti
+
+```{r ti_visualizae_setup, warning=FALSE, message=FALSE}
+library(ggplot2)
+if(!exists("visualize_ti", mode="function")) source("data_visualization.R")
+```
