@@ -13,8 +13,9 @@ output:
 
 ```{r setup, include=FALSE}
 setwd("E:/GitHub/Tectonics-EOF")
-### 20160206 美濃地震，Julian Date 時間格式 (天數 - 0.5)/366
-### 120.54, 22.92
+# 2016-02-06 美濃地震 c(120.54, 22.92)
+# Julian Date 時間格式 (天數 - 0.5)/366
+# 2010-03-04 甲仙地震 c(120.73, 23)
 ```
 
 ## Data Preprocess & EOF
@@ -45,9 +46,9 @@ df_sta <- readRDS("df_sta.rds")
 library(readr);library(tidyverse);library(zoo)
 if(!exists("data_process", mode="function")) source("data_preprocess.R")
 
-start <- "2016-01-22"
-end <- "2016-02-21"
-cc <- data_process(start, end, 24, "E")
+time <- "2010-03-04"
+span <- 15
+cc <- data_process(time, span, 24, "U")
 ```
 
 ### Results of Si & Ti
@@ -57,8 +58,7 @@ Si <- cbind(newColName = substring(rownames(Si),1,4), Si)
 rownames(Si) <- 1:nrow(Si)
 colnames(Si) <- c("name", "PC1", "PC2")
 df_si <- inner_join(Si, df_sta, by="name")
-df_ti <- cc$Ti[,1:2]
-df_ti$date <- date <- seq(as.Date(start), as.Date(end), by="days")
+df_ti <- cc$Ti[,c("date", "PC1", "PC2")]
 ```
 ```{r bind_modes2, echo=FALSE, warning=FALSE}
 df_si %>%
@@ -86,6 +86,7 @@ library(sp) # Used for the spsample function
 library(raster) # Used for clip out
 library(tmap) # Install "XML" first, install.packages("XML", type="binary")
 if(!exists("visualize_si", mode="function")) source("data_visualization.R")
+visualize_si(df_si, c(120.73, 23), "PC1")
 ```
 
 ### Visualization of Ti
@@ -93,4 +94,5 @@ if(!exists("visualize_si", mode="function")) source("data_visualization.R")
 ```{r ti_visualizae_setup, warning=FALSE, message=FALSE}
 library(ggplot2)
 if(!exists("visualize_ti", mode="function")) source("data_visualization.R")
+visualize_ti(df_ti, "PC1")
 ```

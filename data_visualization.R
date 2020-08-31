@@ -18,9 +18,9 @@ visualize_si <- function(df_si, center, pc) {
   df_si['PC2N'] <- df_si$PC2 / max(df_si$PC2)
   
   ### Process Spatial Data
-  P <- SpatialPointsDataFrame(cbind(df_si_2$lon, df_si_2$lat), df_si_2['PC2N'], 
+  P <- SpatialPointsDataFrame(cbind(df_si$lon, df_si$lat), df_si[c('PC1N', 'PC2N')], 
                               proj4string=CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84"))
-  grd <- as.data.frame(spsample(P, "regular", n=500000)) # Create an empty grid where n is the total number of cells
+  grd <- as.data.frame(spsample(P, "regular", n=50000)) # Create an empty grid where n is the total number of cells
   names(grd) <- c("X", "Y")
   coordinates(grd) <- c("X", "Y")
   gridded(grd) <- TRUE  # Create SpatialPixel object

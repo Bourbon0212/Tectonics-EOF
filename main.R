@@ -21,10 +21,9 @@ df_sta <- data.frame(name = sta_name, lat = sta_lat, lon = sta_lon)
 library(readr);library(tidyverse);library(zoo)
 if(!exists("data_process", mode="function")) source("data_preprocess.R")
 
-start <- "2016-01-22"
-end <- "2016-02-21"
-
-cc <- data_process(start, end, 24, "E")
+time <- "2016-02-06"
+span <- 15
+cc <- data_process(time, span, 24, "E")
 
 ### Binding Si with Locations
 Si <- cc$Si[,1:2]
@@ -32,3 +31,9 @@ Si <- cbind(newColName = substring(rownames(Si),1,4), Si)
 rownames(Si) <- 1:nrow(Si)
 colnames(Si) <- c("name", "PC1", "PC2")
 df_si <- inner_join(Si, df_sta, by="name")
+
+### Visualization of Si
+visualize_si(df_si, c(120.54,22.92), "PC1")
+
+### Visualization of Ti
+visualize_ti(df_ti, "PC1")

@@ -3,7 +3,7 @@ library(tidyverse)
 library(zoo)
 setwd("E:/GitHub/Tectonics-EOF")
 
-data_process <- function(start, end, lat, component) {
+data_process <- function(time, span, lat, component) {
   file_path <- list.files("data_raw") # COR files of all stations
   
   ### Get the stations of studying area
@@ -31,6 +31,9 @@ data_process <- function(start, end, lat, component) {
   
   ### Time filtering & interpolation
   
+  start <- as.Date(time) - span; end <- as.Date(time) + span
+  diff <- as.numeric(end - start)
+  
   start_year <- as.numeric(substring(start, 1, 4))
   start_julian <- as.numeric(format(as.Date(start), '%j'))
   start_time <- round(start_year + ((start_julian - 0.5) / 366), 5)
@@ -39,7 +42,7 @@ data_process <- function(start, end, lat, component) {
   end_time <- round(end_year + ((end_julian - 0.5) / 366), 5)
   
   df_filter <- filter(df, time >= start_time & time <= end_time)
-  df_select <- df_filter[colSums(!is.na(df_filter)) >= 25] # Drop stations with too many NA
+  df_select <- df_filter[colSums(!is.na(df_filter)) >= (diff * 5/6)] # Drop stations with too many NA
   Cz <- zoo(df_select) # Interpolate with zoo
   df_filled <- as.data.frame(na.fill(na.approx(Cz), "extend"))
   
@@ -48,10 +51,7 @@ data_process <- function(start, end, lat, component) {
   Si <- as.data.frame(data.pca$rotation) # 空間模式
   pca_eigenvector <- data.pca$rotation; D = data.matrix(df_filled[,2:length(df_filled)])
   Ti <- as.data.frame(D %*% pca_eigenvector) # 時間模式
+  Ti$date <- seq(as.Date(start), as.Date(end), by="days")
   
   return(list(Si = Si, Ti = Ti))
 }
-
-start <- "2016-01-22"
-end <- "2016-02-21"
-cc <- data_process(start, end, 24, "E")
