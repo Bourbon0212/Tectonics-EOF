@@ -30,6 +30,7 @@ visualize_si <- function(df_si, center, pc) {
   ### Interpolation using Kriging
   P$X <- coordinates(P)[,1] # Add X and Y to P
   P$Y <- coordinates(P)[,2]
+  P <- sp::remove.duplicates(P) # Remove duplicate points
   f.1 <- NA # Define the 1st order polynomial equation
   if (pc == "PC1") {
     f.1 <- as.formula(PC1N ~ X + Y) 

@@ -29,7 +29,7 @@ for (i in 1:length(file_path)) {
 }
 
 ### Loop loading files
-component = "N"
+component = "U"
 
 start_path <- paste0("data_raw/", sta_study[1])
 df <- read.table(start_path, col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))[c("time", component)]
@@ -43,16 +43,17 @@ df <- arrange(df, time)
 
 ### Time filtering & interpolation
 
-time <- "2010-03-04"
-span <- 15
+time <- "2003-12-10"
+pre <- 15
+post <- 30
 
-start <- as.Date(time) - span; end <- as.Date(time) + span
+start <- as.Date(time) - pre; end <- as.Date(time) + post
 diff <- as.numeric(end - start)
 
 start_year <- as.numeric(substring(start, 1, 4))
 start_julian <- as.numeric(format(as.Date(start), '%j'))
 start_time <- round(start_year + ((start_julian - 0.5) / 366), 5)
-end_year <- as.numeric(substring(start, 1, 4))
+end_year <- as.numeric(substring(end, 1, 4))
 end_julian <- as.numeric(format(as.Date(end), '%j'))
 end_time <- round(end_year + ((end_julian - 0.5) / 366), 5)
 
@@ -97,6 +98,7 @@ proj4string(grd) <- proj4string(P) # Add P's projection to the empty grid
 ### Interpolation using Kriging
 P$X <- coordinates(P)[,1] # Add X and Y to P
 P$Y <- coordinates(P)[,2]
+P <- sp::remove.duplicates(P) # Remove duplicate points
 f.1 <- as.formula(PC1N ~ X + Y) 
 # Compute the sample variogram
 # Note that the f.1 trend model is one of the parameters passed to variogram()

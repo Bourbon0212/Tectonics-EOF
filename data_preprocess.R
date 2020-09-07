@@ -3,7 +3,7 @@ library(tidyverse)
 library(zoo)
 setwd("E:/GitHub/Tectonics-EOF")
 
-data_process <- function(time, span, lat, component) {
+data_process <- function(time, pre, post, lat, component) {
   file_path <- list.files("data_raw") # COR files of all stations
   
   ### Get the stations of studying area
@@ -31,13 +31,13 @@ data_process <- function(time, span, lat, component) {
   
   ### Time filtering & interpolation
   
-  start <- as.Date(time) - span; end <- as.Date(time) + span
+  start <- as.Date(time) - pre; end <- as.Date(time) + post
   diff <- as.numeric(end - start)
   
   start_year <- as.numeric(substring(start, 1, 4))
   start_julian <- as.numeric(format(as.Date(start), '%j'))
   start_time <- round(start_year + ((start_julian - 0.5) / 366), 5)
-  end_year <- as.numeric(substring(start, 1, 4))
+  end_year <- as.numeric(substring(end, 1, 4))
   end_julian <- as.numeric(format(as.Date(end), '%j'))
   end_time <- round(end_year + ((end_julian - 0.5) / 366), 5)
   

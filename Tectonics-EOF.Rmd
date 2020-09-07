@@ -13,9 +13,10 @@ output:
 
 ```{r setup, include=FALSE}
 setwd("E:/GitHub/Tectonics-EOF")
-# 2016-02-06 美濃地震 c(120.54, 22.92)
 # Julian Date 時間格式 (天數 - 0.5)/366
+# 2016-02-06 美濃地震 c(120.54, 22.92)
 # 2010-03-04 甲仙地震 c(120.73, 23)
+# 2003-12-10 成功地震 c(121.4, 23.07)
 ```
 
 ## Data Preprocess & EOF
@@ -46,9 +47,10 @@ df_sta <- readRDS("df_sta.rds")
 library(readr);library(tidyverse);library(zoo)
 if(!exists("data_process", mode="function")) source("data_preprocess.R")
 
-time <- "2010-03-04"
-span <- 15
-cc <- data_process(time, span, 24, "U")
+time <- "2003-12-10"
+pre <- 22
+post <- 23
+cc <- data_process(time, pre, post, 24, "E")
 ```
 
 ### Results of Si & Ti
@@ -86,7 +88,7 @@ library(sp) # Used for the spsample function
 library(raster) # Used for clip out
 library(tmap) # Install "XML" first, install.packages("XML", type="binary")
 if(!exists("visualize_si", mode="function")) source("data_visualization.R")
-visualize_si(df_si, c(120.73, 23), "PC1")
+visualize_si(df_si, c(121.4, 23.07), "PC1")
 ```
 
 ### Visualization of Ti
