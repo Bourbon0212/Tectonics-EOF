@@ -1,6 +1,7 @@
 library(readr)
 library(tidyverse)
 library(zoo)
+library(pracma)
 setwd("E:/GitHub/Tectonics-EOF")
 
 data_process <- function(time, pre, post, lat, component) {
@@ -46,11 +47,31 @@ data_process <- function(time, pre, post, lat, component) {
   Cz <- zoo(df_select) # Interpolate with zoo
   df_filled <- as.data.frame(na.fill(na.approx(Cz), "extend"))
   
+  ### Data Detrend
+  colnames <- df_filled$time
+  df_filled_t <- t(df_filled[2:length(df_filled)])
+  colnames(df_filled) <- colnames
+  df_detrend_t <- detrend(df_filled_t, tt = 'constant')
+  df_detrend <- t(df_detrend_t)
+  rownames(df_detrend) <- colnames
+  
   ###  PCA
-  data.pca <- prcomp(df_filled[2:length(df_filled)])
+  # df_detrend <- df_filled[2:length(df_filled)]
+  data.pca <- prcomp(df_detrend)
+  # fviz_eig(data.pca)
+  pca_eigenvector <- data.pca$rotation; D <- data.matrix(df_detrend)
+  pca_eigenvalue <- data.pca$sdev ** 2
   Si <- as.data.frame(data.pca$rotation) # 空間模式
-  pca_eigenvector <- data.pca$rotation; D = data.matrix(df_filled[,2:length(df_filled)])
   Ti <- as.data.frame(D %*% pca_eigenvector) # 時間模式
+  
+  ### Normalization
+  # for (i in 1:length(Si)) {
+    # Si[i] <- Si[i] / sd(Si[[i]])
+  # }
+  # for (i in 1:length(Ti)) {
+    # Ti[i] <- Ti[i] * sd(Si[[i]])
+  # }
+  
   Ti$date <- seq(as.Date(start), as.Date(end), by="days")
   
   return(list(Si = Si, Ti = Ti))

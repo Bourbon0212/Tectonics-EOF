@@ -1,6 +1,7 @@
 library(readr)
 library(tidyverse)
 library(zoo)
+library(pracma)
 library(factoextra)
 library(rgdal) 
 library(GISTools)
@@ -43,9 +44,9 @@ df <- arrange(df, time)
 
 ### Time filtering & interpolation
 
-time <- "2003-12-10"
-pre <- 15
-post <- 30
+time <- "2010-03-04"
+pre <- 20
+post <- 50
 
 start <- as.Date(time) - pre; end <- as.Date(time) + post
 diff <- as.numeric(end - start)
@@ -59,15 +60,34 @@ end_time <- round(end_year + ((end_julian - 0.5) / 366), 5)
 
 df_filter <- filter(df, time >= start_time & time <= end_time)
 df_select <- df_filter[colSums(!is.na(df_filter)) >= (diff * 5/6)] # Drop stations with too many NA
-Cz <- zoo(df_select) # Interpolate with zoofv
+Cz <- zoo(df_select) # Interpolate with zoo
 df_filled <- as.data.frame(na.fill(na.approx(Cz), "extend"))
 
+### Data Detrend
+colnames <- df_filled$time
+df_filled_t <- t(df_filled[2:length(df_filled)])
+colnames(df_filled) <- colnames
+df_detrend_t <- detrend(df_filled_t, tt = 'constant')
+df_detrend <- t(df_detrend_t)
+rownames(df_detrend) <- colnames
+
 ###  PCA
-data.pca <- prcomp(df_filled[2:length(df_filled)])
+df_detrend <- df_filled[2:length(df_filled)]
+data.pca <- prcomp(df_detrend)
 fviz_eig(data.pca)
+pca_eigenvector <- data.pca$rotation; D <- data.matrix(df_detrend)
+pca_eigenvalue <- data.pca$sdev ** 2
 Si <- as.data.frame(data.pca$rotation) # 空間模式
-pca_eigenvector <- data.pca$rotation; D = data.matrix(df_filled[,2:length(df_filled)])
 Ti <- as.data.frame(D %*% pca_eigenvector) # 時間模式
+
+### Normalization
+for (i in 1:length(Si)) {
+  Si[i] <- Si[i] / sd(Si[[i]])
+}
+for (i in 1:length(Ti)) {
+  Ti[i] <- Ti[i] * sd(Si[[i]])
+}
+
 Ti$date <- seq(as.Date(start), as.Date(end), by="days")
 
 ### Binding Si with Locations
@@ -80,10 +100,6 @@ df_si <- inner_join(Si, df_sta, by="name")
 ### Taiwan ShapeFile
 TW <- readOGR(dsn = "./shp", layer = "Taiwan_county", encoding="utf8") #TWD97
 TW <- spTransform(TW, CRS("+proj=longlat +datum=WGS84 +no_defs +ellps=WGS84")) #WGS84
-
-### Maximum Normalization
-df_si['PC1N'] <- df_si$PC1 / max(df_si$PC1)
-df_si['PC2N'] <- df_si$PC2 / max(df_si$PC2)
 
 ### Process Spatial Data
 P <- SpatialPointsDataFrame(cbind(df_si$lon, df_si$lat), df_si[c('PC1N', 'PC2N')], 

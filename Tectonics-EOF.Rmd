@@ -47,9 +47,9 @@ df_sta <- readRDS("df_sta.rds")
 library(readr);library(tidyverse);library(zoo)
 if(!exists("data_process", mode="function")) source("data_preprocess.R")
 
-time <- "2003-12-10"
-pre <- 22
-post <- 23
+time <- "2010-03-04"
+pre <- 33
+post <- 59
 cc <- data_process(time, pre, post, 24, "E")
 ```
 
@@ -88,12 +88,12 @@ library(sp) # Used for the spsample function
 library(raster) # Used for clip out
 library(tmap) # Install "XML" first, install.packages("XML", type="binary")
 if(!exists("visualize_si", mode="function")) source("data_visualization.R")
-visualize_si(df_si, c(121.4, 23.07), "PC1")
+visualize_si(df_si, c(120.73, 23), "PC1")
 ```
 
 ### Visualization of Ti
 
-```{r ti_visualizae_setup, warning=FALSE, message=FALSE}
+```{r ti_visualizae_setup, message=FALSE, warning=FALSE}
 library(ggplot2)
 if(!exists("visualize_ti", mode="function")) source("data_visualization.R")
 visualize_ti(df_ti, "PC1")
