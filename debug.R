@@ -20,7 +20,7 @@ lat = 24
 
 sta_study <- c()
 for (i in 1:length(file_path)) {
-  tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))
+  tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))
   
   if (tmp$lat[1] <= lat) { # Based on latitude
     sta_study <- c(sta_study, file_path[i]) 
@@ -33,10 +33,10 @@ for (i in 1:length(file_path)) {
 component = "U"
 
 start_path <- paste0("data_raw/", sta_study[1])
-df <- read.table(start_path, col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))[c("time", component)]
+df <- read.table(start_path, col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))[c("time", component)]
 for (i in 2:length(sta_study)) {
   # print(sta_study[i])
-  tmp <- read.table(paste0("data_raw/", sta_study[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))[c("time", component)]
+  tmp <- read.table(paste0("data_raw/", sta_study[i]), col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))[c("time", component)]
   df <- full_join(df, tmp, by = "time")
 }
 colnames(df) <- c("time", sta_study) # Rename colname to sta_study
@@ -71,14 +71,60 @@ df_detrend_t <- detrend(df_filled_t, tt = 'constant')
 df_detrend <- t(df_detrend_t)
 rownames(df_detrend) <- colnames
 
+### PCA Process
+
+n <- dim(df_detrend)[1] # number of temporal samples
+p <- dim(df_detrend)[2] # number of points with data
+
+if (n >= p) {
+  # If n>=p we estimate the EOF in the State Space Setting, i.e., using Z'*Z which is p x p.
+  R <- t(df_detrend) %*% df_detrend
+  data.pca <- prcomp(R)
+  pca_eigenvector <- data.pca$rotation
+  pca_eigenvalue <- data.pca$sdev ** 2
+  
+  Si <- as.data.frame(pca_eigenvector) # 丁家Α
+  Ti <- as.data.frame(df_detrend %*% pca_eigenvector) # 丁家Α
+  # We estimate the expansion coefficients (time series) associated to each EOF
+  # for (i in 1:nrow(Ti)) {
+    # Ti[,i] = df_detrend %*% pca_eigenvector[,i]
+  # }
+  
+} else if (n < p) {
+  # If n<p  we estimate the EOF in the Sample Space Setting, i.e., using Z*Z' which is n x n.
+  R <- df_detrend %*% t(df_detrend)
+  data.pca <- prcomp(R)
+  pca_eigenvector <- data.pca$rotation
+  pca_eigenvalue <- data.pca$sdev ** 2
+  
+  Si <- as.data.frame(pca_eigenvector) # 丁家Α
+  Ti <- as.data.frame(t(df_detrend) %*% pca_eigenvector) # 丁家Α
+  # Ti1 <- matrix(nrow=p, ncol=n)
+  # We estimate the expansion coefficients (time series) associated to each EOF
+  # for (i in 1:length(Ti)) {
+    # Ti1[,i] = t(df_detrend) %*% pca_eigenvector[,i]
+  # }
+  # Si = Ti %/% sqrt(pca_eigenvalue)
+  # Ti = sqrt(pca_eigenvalue) %*% pca_eigenvector
+  
+  # Expansion coefficients
+  # for (i in 1:nrow(Si)) {
+    # Si[,i] = Ti[,i] %/% sqrt(pca_eigenvalue[i])
+  # }
+  # for (i in 1:nrow(Ti)) {
+    # Ti[,i] = sqrt(pca_eigenvalue[i]) %*% pca_eigenvector[,i]
+  # }
+}
+
+
 ###  PCA
-df_detrend <- df_filled[2:length(df_filled)]
-data.pca <- prcomp(df_detrend)
-fviz_eig(data.pca)
-pca_eigenvector <- data.pca$rotation; D <- data.matrix(df_detrend)
-pca_eigenvalue <- data.pca$sdev ** 2
-Si <- as.data.frame(data.pca$rotation) # 丁家Α
-Ti <- as.data.frame(D %*% pca_eigenvector) # 丁家Α
+# df_detrend <- df_filled[2:length(df_filled)]
+# data.pca <- prcomp(df_detrend)
+# fviz_eig(data.pca)
+# pca_eigenvector <- data.pca$rotation; D <- data.matrix(df_detrend)
+# pca_eigenvalue <- data.pca$sdev ** 2
+# Si <- as.data.frame(data.pca$rotation) # 丁家Α
+# Ti <- as.data.frame(D %*% pca_eigenvector) # 丁家Α
 
 ### Normalization
 for (i in 1:length(Si)) {

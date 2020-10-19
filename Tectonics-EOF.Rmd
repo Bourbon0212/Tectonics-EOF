@@ -28,7 +28,7 @@ file_path <- list.files("data_raw") # COR files of all stations
 sta_name <- c();sta_lat <- c();sta_lon <- c()
 
 for (i in 1:length(file_path)) {
-  tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))
+  tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))
   print(file_path[i])
   sta_name[i] <- substring(file_path[i],1,4)
   sta_lat[i] <- round(tmp$lat[1], 5)
@@ -44,7 +44,7 @@ df_sta <- readRDS("df_sta.rds")
 ### Tidying, Interpolations & EOF
 
 ```{r data_preprocess, message=FALSE, warning=FALSE}
-library(readr);library(tidyverse);library(zoo)
+library(readr);library(tidyverse);library(zoo);library(factoextra)
 if(!exists("data_process", mode="function")) source("data_preprocess.R")
 
 time <- "2010-03-04"

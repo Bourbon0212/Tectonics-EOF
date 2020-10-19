@@ -2,6 +2,7 @@ library(readr)
 library(tidyverse)
 library(zoo)
 library(pracma)
+library(factoextra)
 setwd("E:/GitHub/Tectonics-EOF")
 
 data_process <- function(time, pre, post, lat, component) {
@@ -10,7 +11,7 @@ data_process <- function(time, pre, post, lat, component) {
   ### Get the stations of studying area
   sta_study <- c()
   for (i in 1:length(file_path)) {
-    tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))
+    tmp <- read.table(paste0("data_raw/", file_path[i]), col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))
     
     if (tmp$lat[1] <= lat) { # Based on latitude
       sta_study <- c(sta_study, file_path[i]) 
@@ -21,10 +22,10 @@ data_process <- function(time, pre, post, lat, component) {
   
   ### Loop loading files
   start_path <- paste0("data_raw/", sta_study[1])
-  df <- read.table(start_path, col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))[c("time", component)]
+  df <- read.table(start_path, col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))[c("time", component)]
   for (i in 2:length(sta_study)) {
     # print(sta_study[i])
-    tmp <- read.table(paste0("data_raw/", sta_study[i]), col.names = c("time", "lat", "lon", "hgt", "E", "N", "U", "X"))[c("time", component)]
+    tmp <- read.table(paste0("data_raw/", sta_study[i]), col.names = c("time", "lat", "lon", "hgt", "N", "E", "U", "X"))[c("time", component)]
     df <- full_join(df, tmp, by = "time")
   }
   colnames(df) <- c("time", sta_study) # Rename colname to sta_study
@@ -50,7 +51,6 @@ data_process <- function(time, pre, post, lat, component) {
   ### Data Detrend
   colnames <- df_filled$time
   df_filled_t <- t(df_filled[2:length(df_filled)])
-  colnames(df_filled) <- colnames
   df_detrend_t <- detrend(df_filled_t, tt = 'constant')
   df_detrend <- t(df_detrend_t)
   rownames(df_detrend) <- colnames
@@ -58,7 +58,11 @@ data_process <- function(time, pre, post, lat, component) {
   ###  PCA
   # df_detrend <- df_filled[2:length(df_filled)]
   data.pca <- prcomp(df_detrend)
-  # fviz_eig(data.pca)
+  
+  ###  Plot
+  fviz_eig(data.pca)
+  ###
+  
   pca_eigenvector <- data.pca$rotation; D <- data.matrix(df_detrend)
   pca_eigenvalue <- data.pca$sdev ** 2
   Si <- as.data.frame(data.pca$rotation) # ªÅ¶¡¼Ò¦¡
@@ -76,3 +80,10 @@ data_process <- function(time, pre, post, lat, component) {
   
   return(list(Si = Si, Ti = Ti))
 }
+
+time <- "2010-03-04"
+pre <- 33
+post <- 59
+component <- "U"
+lat <- 24
+cc <- data_process(time, pre, post, 24, "E")
