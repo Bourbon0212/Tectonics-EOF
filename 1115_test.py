@@ -9,14 +9,14 @@ import pandas as pd
 import numpy as np
 import matplotlib.pyplot as plt
 
-# 2003-12-10 (2003.93852) 成功地震 c(121.4, 23.07)
-# 2003.93852 (2003.77459~2004.10519)
+# 2003-12-10 (2003.93852 , 2003 344) 成功地震 c(121.4, 23.07)
+# (2003.77459~2004.10519) 前後60天
 
-df = pd.read_csv('E:/GitHub/Tectonics-EOF/data_raw/CHEN.COR', header=None,
+df = pd.read_csv('E:/GitHub/Tectonics-EOF/data_raw/ANBU.COR', header=None,
                     sep=r'\s*(?:\t|\s)\s*', engine='python',
                     names=['time','lat','lon','hgt','E','N','U','X'])
 
-time_filter = (df.time > 2003.77459) & (df.time < 2004.10519)
+time_filter = (df.time >= 2003.77459) & (df.time <= 2004.10519)
 df_U = df.loc[time_filter,['time', 'U']].reset_index()
 
 constant = pd.DataFrame(np.repeat(1, len(df_U)))
